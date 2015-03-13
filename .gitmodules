@@ -1,0 +1,3 @@
+[submodule "netsim"]
+	path = netsim
+	url = https://github.com/brollb/netsim.git
