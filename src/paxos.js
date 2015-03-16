@@ -9,7 +9,7 @@ var Counter = (function() {
 })();
 
 
-function Paxos(nodes) {
+function Paxos(nodes, learnerId) {
     return {
 	'handle' : function(id, message) {
 	    switch(message.type) {
@@ -18,20 +18,26 @@ function Paxos(nodes) {
 		if(message.sequenceNumber > this.promiseSequenceNumber) {
 		    this.oldPromiseNumber = this.promiseSequenceNumber;
 		    this.promiseSequenceNumber = message.sequenceNumber;
-		    this.sendMessage(id, {
+		    //if(this.uuid !== 'node2') {
+		    console.log("I AM " + this.uuid);
+		    this.sendMessage('node2', {
 			'type' : 'PROMISE',
 			'sequenceNumber' : this.promiseSequenceNumber,
+			'sender': this.uuid
 		    });
 		    if(this.promiseSequenceNumber !== this.oldPromiseNumber) {
-			this.sendMessage(id, {
+			this.sendMessage('node2', {
 			    'type': 'UNPROMISE',
 			    'sequenceNumber': this.promiseSequenceNumber
 			});
 		    }
+		//}
 		}
 		
 		break;
 	    case 'PROMISE':
+		console.log("SENDER: " + message.sender);
+		
 		this.activePromises[id] = 1;
 		var total = 0;
 		
@@ -108,3 +114,4 @@ module.exports = {
     'Paxos': Paxos,
     'Counter': Counter
 };
+
