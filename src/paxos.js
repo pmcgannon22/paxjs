@@ -14,46 +14,46 @@ function Paxos(nodes, learnerId) {
 	'handle' : function(id, message) {
 	    switch(message.type) {
 	    case 'PREPARE':
-		//code goes here
+
 		if(message.sequenceNumber > this.promiseSequenceNumber) {
 		    this.oldPromiseNumber = this.promiseSequenceNumber;
 		    this.promiseSequenceNumber = message.sequenceNumber;
-		    //if(this.uuid !== 'node2') {
-		    console.log("I AM " + this.uuid);
-		    this.sendMessage('node2', {
+		    this.sendMessage(message.sender, {
 			'type' : 'PROMISE',
+			'value' : message.value,
 			'sequenceNumber' : this.promiseSequenceNumber,
 			'sender': this.uuid
 		    });
+
 		    if(this.promiseSequenceNumber !== this.oldPromiseNumber) {
-			this.sendMessage('node2', {
+			this.sendMessage(id, {
 			    'type': 'UNPROMISE',
 			    'sequenceNumber': this.promiseSequenceNumber
 			});
 		    }
-		//}
 		}
 		
 		break;
 	    case 'PROMISE':
-		console.log("SENDER: " + message.sender);
-		
-		this.activePromises[id] = 1;
+		this.activePromises[message.sender] = 1;
 		var total = 0;
 		
 		for (var property in this.activePromises) {
 		    total += this.activePromises[property];
 		}
-		if(total > (nodes.length/2)) {
-		    for(n in nodes) { 
-			if(n !== this.uuid){
-			    this.sendMessage(n, {
+		if(total > (nodes.length/2) && this.acceptReqSeqNumber < this.promiseSequenceNumber) {
+		    for(n in nodes) {
+			if(nodes[n] !== this.uuid){
+			    console.log(nodes[n] + " " + this.uuid);
+			    this.sendMessage(nodes[n], {
 				'type' : 'ACCEPT_REQUEST',
-				'value': this.value,
-				'sequenceNumber': this.promiseSequenceNumber
+				'value': message.value,
+				'sequenceNumber': this.promiseSequenceNumber,
+				'sender' : this.uuid
 			    });
 			}
 		    }
+		    this.acceptReqSeqNumber = this.promiseSequenceNumber;
 		}
 		    break;
 		case 'UNPROMISE':
@@ -62,33 +62,36 @@ function Paxos(nodes, learnerId) {
 		    
 		case 'ACCEPT_REQUEST':
 		    if(message.sequenceNumber < this.promiseSequenceNumber) {
-			this.sendMessage(id, {
+			this.sendMessage(message.sender, {
 			    'type': 'UNPROMISE',
-			    'sequenceNumber': message.sequenceNumber
+			    'sequenceNumber': message.sequenceNumber,
+			    'sender' : this.uuid
 			});
 		    } else {
 			this.value = message.value;
-			this.sendMessage(id, {
+			this.sendMessage(message.sender, {
 			    'type': 'ACCEPT_CONFIRMED',
+			    'sender' : this.uuid,
+			    'value' : message.value
 			});
 			this.sendMessage(learnerId, {
 			    'type': 'LEARN',
 			    'acceptorId': id,
-			    'value': this.value
+			    'value': message.value,
+			    'sender' : this.uuid
 			});
 		    }
 		    break;
 		case 'ACCEPT_CONFIRMED':
 		    break;
 		case 'LEARN':
-		    this.acceptors[message.acceptorId] = message.value;
+		this.acceptors[message.acceptorId] = message.value;
 		    var total = 0;
 		    for(var key in this.acceptors) {
 			if(this.acceptors[key] === message.value)
 			    total += 1;
 		    }
-		    console.log("LEARNED: " + message.value +  " FROM " + id);
-		    if(total > this.numAcceptors/2) {
+		    if(total > nodes.length/2) {
 			console.log("CONSENSUS: " + message.value);
 		    }
 
@@ -100,9 +103,11 @@ function Paxos(nodes, learnerId) {
 	},
 	'sendPrepare': function() {
 	    this.promiseSequenceNumber = Counter();
-	    for(var i=1; i < 5; i += 1){
+	    for(var i=1; i < nodes.length; i += 1){
 		this.sendMessage(nodes[i], {
+		    'sender' : this.uuid,
 		    'type' : 'PREPARE',
+		    'value' : 123456,
 		    'sequenceNumber': this.promiseSequenceNumber,
 		});
 	    }
