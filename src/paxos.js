@@ -9,6 +9,7 @@ var Counter = (function() {
 })();
 
 
+var finalTime = 5;
 function Paxos(nodes, learnerId) {
     return {
 	'handle' : function(id, message) {
@@ -93,6 +94,7 @@ function Paxos(nodes, learnerId) {
 		    }
 		    if(total > nodes.length/2) {
 			console.log("CONSENSUS: " + message.value);
+			console.log("FINAL TIME: " + (new Date()).getTime());
 		    }
 
 		    break;

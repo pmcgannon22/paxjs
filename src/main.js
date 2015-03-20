@@ -134,5 +134,6 @@ for(var i = 2; i <= N_NODES; i++) {
   netsim.addNode(node4);
   netsim.addNode(node5);
 */
+console.log("START TIME: " + (new Date()).getTime());
 netsim.simulate();
 
