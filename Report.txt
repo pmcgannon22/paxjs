@@ -1,0 +1,8 @@
+In order to see how the number of acceptors affects the runtime of the Paxos algorithm, we ran the algorithm with a number of different nodes in the system.  For each time we ran it, we had one leaner and one proposer.  The number of acceptors and time to reach consensus varied as follows :
+5   | 16
+10  | 16
+50  | 63
+100 | 125
+200 | 328
+
+As we can see, this was fairly linear growth with respect to the number of acceptors in the system.  This is expected since adding a new acceptor requires only a constant number of more messages to be sent, since it only needs to communicate with the proposer and learner and not the other acceptors.  In this way the data from our experiments coincide nicely with what would be expected from a big-O standpoint. 
